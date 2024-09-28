@@ -4,7 +4,7 @@ import requests
 url = "http://localhost:11434/api/generate"
 data = {
     "model": "phi3-3.8b-mini-4k-instruct-fp16",
-    "prompt": "Give me 10 words about debugging."
+    "prompt": "Define debugging in one sentence."
 }
 
 # Send the POST request with streaming enabled

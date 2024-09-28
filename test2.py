@@ -8,7 +8,7 @@ headers = {
 }
 data = {
     "model": "phi3-3.8b-mini-4k-instruct-fp16",  # Specify the model you want to use
-    "prompt": "Give me 10 words about debugging.",
+    "prompt": "What is an alternative word for debugging?",
     "stream": True  # Enable streaming responses
 }
 
