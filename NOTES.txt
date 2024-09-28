@@ -1,0 +1,193 @@
+if missing get https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-6.1.1-full_build.7z
+unpack to C:\Program Files\ffmpeg
+
+check poppler in path C:\Program Files\poppler\Library\bin
+check tesseract in path C:\Program Files\Tesseract-OCR
+check ffmpeg in path C:\Program Files\ffmpeg
+check nodejs in path c:\Program Files\nodejs
+
+In Admin Powershell
+cd "C:\Program Files"
+mkdir sikarag
+mkdir sikarag\models
+mkdir sikarag\models\huggingface
+mkdir sikarag\models\ollama
+mkdir sikarag\nginx
+mkdir sikarag\nssm
+mkdir sikarag\ollama
+mkdir sikarag\python
+mkdir sikarag\siteapis
+mkdir sikarag\siteapis\pmo
+
+only if vanilla
+	mkdir sikarag\python\DLLs
+	mkdir sikarag\python\Scripts
+
+add to path C:\Program Files\sikarag\nssm
+add to path C:\Program Files\sikarag\ollama
+add to path C:\Program Files\sikarag\python
+add to path C:\Program Files\sikarag\python\Scripts
+
+add to env HF_HOME=C:\Program Files\sikarag\models\huggingface
+add to env OLLAMA_FLASH_ATTENTION=1
+add to env OLLAMA_MODELS=C:\Program Files\sikarag\models\ollama
+
+restart Admin PowerShell
+
+get https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip
+
+unpack	nssm-2.24-101-g897c7ad.zip
+exe to	C:\Program Files\sikarag\nssm
+
+unpack	ollama-windows-amd64.zip
+to		C:\Program Files\sikarag\ollama
+
+unpack	nginx-1.26.2.zip
+to 		C:\Program Files\sikarag\nginx
+
+unpack	python-3.11.9-embed-amd64.zip
+to 		C:\Program Files\sikarag\python
+then inside
+	mv python311._pth python311.pth
+	wget https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+	python.exe get-pip.py
+	rm get-pip.py
+	pip config set global.trusted-host "pypi.org files.pythonhosted.org pypi.python.org"
+
+mkdir "C:\Program Files\sikarag\nginx\html\pmo"
+copy mime.types to "C:\Program Files\sikarag\nginx\conf"
+copy nginx.conf to "C:\Program Files\sikarag\nginx\conf"
+copy 50x.html into html/pmo
+adjust nginx.conf server
+	root   html/pmo;
+adjust nginx.conf location api
+	proxy_connect_timeout 60s;
+	proxy_read_timeout 120s;
+	proxy_send_timeout 120s;
+
+	
+copy	models\huggingface\*
+to 		"C:\Program Files\sikarag\models\huggingface"
+
+run
+	nssm install sikarag_ollama
+with
+	Path C:\Program Files\sikarag\ollama\ollama.exe
+	Arguments serve
+	DisplayName sikarag_ollama
+	Priority above normal or high
+and start service
+
+goto
+	models\ollama\mxbai-embed-large-latest
+run
+	ollama create mxbai-embed-large
+
+goto
+	models\ollama\phi3-3.8b-mini-4k-instruct-fp16
+run
+	ollama create phi3-3.8b-mini-4k-instruct-fp16
+
+npm config set proxy http://proxy.company.com:8080
+npm config set https-proxy http://proxy.company.com:8080
+npm config set strict-ssl false
+
+npm install -g yarn cross-env
+
+yarn config set proxy http://proxy.domain.tld:port
+yarn config set https-proxy http://proxy.domain.tld:port
+yarn config set enableStrictSsl false
+
+make directory for payload\pmo in userspace
+in there
+	mkdir files
+	mkdir files\excels
+	mkdir files\pdfs
+	mkdir files\videos
+copy payload\regex_replacements.csv
+into payload\pmo userspace
+
+copy	ayp-dev\backend\api\*
+to		C:\Program Files\sikarag\siteapis\pmo
+in there
+	pip install -r requirements.in
+	adjust config.ini
+	
+make directory for frontends\pmo in userspace
+copy ayp-dev\frontend\*
+into frontends\pmo userspace
+in there
+	yarn install
+	yarn run build:prod
+copy dist\*
+into C:\Program Files\sikarag\nginx\html\pmo
+
+run
+	nssm install sikarag_nginx
+with
+	Path C:\Program Files\sikarag\nginx\nginx.exe
+	DisplayName sikarag_nginx
+and start service
+
+in C:\Program Files\sikarag\siteapis\pmo
+run
+	python.exe .\transcriber.py
+	python.exe .\vectorizer.py
+
+run
+	nssm install sikarag_api_pmo
+with
+	Path C:\Program Files\sikarag\python\Scripts\waitress-serve.exe
+	StartupDirectory C:\Program Files\sikarag\siteapis\pmo
+	Arguments --listen=*:5001 --channel-timeout 120 api:app
+and start service
+
+
+TROUBLESHOOT
+
+python transcriber
+	fixed with new transcriber.py
+	make sure ffmpeg is installed and in path (see top)
+
+python vectorizer
+	proxy/security issue connecting to ollama localhost, browser, powershell wget working
+	
+Install step 136
+
+Services ngix/ollama shutdown
+
+tue 1400 or 1600
+
+nvidia-cudnn-cu12<9
+
+nvidia-cublas-cu12==12.1.3.1
+nvidia-cuda-cupti-cu12==12.1.105
+nvidia-cuda-nvrtc-cu12==12.1.105
+nvidia-cuda-runtime-cu12==12.1.105
+nvidia-cudnn-cu12==8.9.2.26
+nvidia-cufft-cu12==11.0.2.54
+nvidia-curand-cu12==10.3.2.106
+nvidia-cusolver-cu12==11.4.5.107
+nvidia-cusparse-cu12==12.1.0.106
+nvidia-nccl-cu12==2.20.5
+nvidia-nvjitlink-cu12==12.5.40
+nvidia-nvtx-cu12==12.1.105
+
+CUDA_VISIBLE_DEVICES=-1
+
+OLLAMA_DEBUG=1
+OLLAMA_HOST=0.0.0.0
+OLLAMA_ORIGINS=*
+
+
+USE OPENAI VERSIONS
+use vectorizer_openai.py
+use ollama_service_openai.
+ollama_uri_emb = http://localhost:11434/v1
+
+REVERSE PROXY FOR OLLAMA
+config.ini
+ollama_uri_v1 = http://localhost:43411/v1
+ollama_uri_emb = http://localhost:43411/v1
+
+use nginx_ollamarev.conf
